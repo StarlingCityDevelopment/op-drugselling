@@ -6,7 +6,7 @@ version '1.0.8'
 lua54 'yes'
 game 'gta5'
 
-ui_page 'web/build/index.html'
+ui_page 'build/index.html'
 
 shared_scripts {
 	'@ox_lib/init.lua',
@@ -36,7 +36,7 @@ server_scripts {
 }
 
 files {
-	'web/build/**/*',
+	'build/**/*',
 }
 
 escrow_ignore {
