@@ -3,7 +3,7 @@ QBox = GetResourceState('qbx_core') == 'started' and true or false
 if not QBox then return end
 
 Fr = {}
-Framework = exports['qb-core']:GetCoreObject()
+Framework = true
 
 Fr.usersTable = "players"
 Fr.identificatorTable = "citizenid"
@@ -13,39 +13,43 @@ Fr.IsPlayerDead = function(source)
     local Player = Fr.getPlayerFromId(source)
     return Player.PlayerData.metadata["isdead"]
 end
-Fr.RegisterServerCallback = function(...)
-    return Framework.Functions.CreateCallback(...)
-end
+
 Fr.getPlayerFromId = function(...)
-    return Framework.Functions.GetPlayer(...)
+    return exports.qbx_core:GetPlayer(...)
 end
-Fr.ManageDirtyMoney = function(Player, action, amount)
+
+Fr.ManageDirtyMoney = function(xPlayer, action, amount)
     if action == "add" then
-        return Player.Functions.AddItem(Config.DirtyMoney.itemName, amount)
+        return exports.qbx_core:AddMoney(xPlayer.source, 'cash', amount)
     else
-        return Player.Functions.RemoveItem(Config.DirtyMoney.itemName, amount)
+        return exports.qbx_core:RemoveMoney(xPlayer.source, 'cash', amount)
     end
 end
+
 Fr.GetIndentifier = function(source)
     local xPlayer = Fr.getPlayerFromId(source)
     return xPlayer.PlayerData.citizenid
 end
+
 Fr.addItem = function(xPlayer, itemname, quantity)
-    return xPlayer.Functions.AddItem(itemname, quantity)
+    return exports.ox_inventory:AddItem(xPlayer.source, itemname, quantity)
 end
+
 Fr.removeItem = function(xPlayer, itemname, quantity)
-    return xPlayer.Functions.RemoveItem(itemname, quantity)
+    return exports.ox_inventory:RemoveItem(xPlayer.source, itemname, quantity)
 end
+
 Fr.getItem = function(xPlayer, itemname)
-    local item = xPlayer.Functions.GetItemByName(itemname)
+    local item = exports.ox_inventory:GetItem(xPlayer.source, itemname)
     local table
     if item then
-        table = {amount = item.amount, name = itemname, weight = item.weight, label = item.label}
-    else 
-        table = {amount = 0, name = itemname, weight = 0, label = ""}
+        table = { amount = item.amount, name = itemname, weight = item.weight, label = item.label }
+    else
+        table = { amount = 0, name = itemname, weight = 0, label = "" }
     end
     return table
 end
+
 Fr.getInventory = function(xPlayer)
-    return xPlayer.PlayerData.items
+    return exports.ox_inventory:GetInventoryItems(xPlayer.source)
 end

@@ -19,9 +19,9 @@ function attachPropToRightHand(ped, obj)
     local bone = GetPedBoneIndex(ped, 57005)
     AttachEntityToEntity(
         obj, ped, bone,
-        0.10, 0.02, -0.02,     
-        0.0, 90.0, 10.0,      
-        true,  true,  false, true, 1, true
+        0.10, 0.02, -0.02,
+        0.0, 90.0, 10.0,
+        true, true, false, true, 1, true
     )
 end
 
@@ -42,11 +42,11 @@ function ensureControl(entity, tries, waitMs)
 end
 
 function hardStopPed(ped)
-    ClearPedTasksImmediately(ped)         
+    ClearPedTasksImmediately(ped)
     ClearPedSecondaryTask(ped)
     SetPedKeepTask(ped, true)
     SetBlockingOfNonTemporaryEvents(ped, true)
-    TaskStandStill(ped, -1)              
+    TaskStandStill(ped, -1)
 end
 
 function faceEntityHardLock(ped, target, timeout, tolDeg)
@@ -63,7 +63,7 @@ function faceEntityHardLock(ped, target, timeout, tolDeg)
     local t = 0
     while t < timeout do
         local cur = GetEntityHeading(ped)
-        local diff = math.abs(((cur - desired + 180.0) % 360.0) - 180.0) 
+        local diff = math.abs(((cur - desired + 180.0) % 360.0) - 180.0)
         if diff <= tolDeg then break end
         Wait(40)
         t = t + 40
@@ -77,8 +77,8 @@ end
 function faceEachOtherHard(playerPed, npc)
     ensureControl(npc, 20, 30)
     hardStopPed(npc)
-    TaskTurnPedToFaceEntity(playerPed, npc, 1200)     
-    faceEntityHardLock(npc, playerPed, 1600, 10.0)        
+    TaskTurnPedToFaceEntity(playerPed, npc, 1200)
+    faceEntityHardLock(npc, playerPed, 1600, 10.0)
     TaskLookAtEntity(playerPed, npc, 10000, 2048, 3)
     TaskLookAtEntity(npc, playerPed, 10000, 2048, 3)
 end

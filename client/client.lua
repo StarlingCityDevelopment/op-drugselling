@@ -30,7 +30,7 @@ Citizen.CreateThread(function()
         local loc = string.lower(Config.Locale)
         SendNUIMessage({
             action = "setLanguage",
-            data = {locale = Locales[loc]}
+            data = { locale = Locales[loc] }
         })
         SendNUIMessage({
             action = "setCurrency",
@@ -46,7 +46,10 @@ end)
 while Framework == nil do Wait(5) end
 
 local scriptName = GetCurrentResourceName()
-if scriptName ~= "op-drugselling" then return print('[OTHERPLANET.DEV] Required resource name: op-drugselling (needed for proper functionality)') end
+if scriptName ~= "op-drugselling" then
+    return print(
+        '[OTHERPLANET.DEV] Required resource name: op-drugselling (needed for proper functionality)')
+end
 
 if Config.LevelCommand then
     TriggerEvent('chat:addSuggestion', ('/%s'):format(Config.LevelCommand), TranslateIt('level_command_helper'), {})
@@ -56,31 +59,31 @@ end
 -- ADDING GLOBAL TARGETS:
 ----
 
-addGlobalPeds("global_peds_drugselling", 1.7, TranslateIt('target_selldrug_icon'), TranslateIt('target_selldrug'), function(entity)
-    dealingPed = entity
-    sellDrugMenu(entity)
-end, function(entity) 
-    if isDrugDealing and dealingPed ~= entity then return false end
-    local pedModel = GetEntityModel(entity)
-    if Config.BlackListPeds[pedModel] then return end
-    local inventoryItems = ScriptFunctions.GetInventoryDrugs()
-    if #inventoryItems < 1 then return false end
-    if soldPedsList[entity] then return false end
-    return IsEntityAPed(entity) and not IsPedAPlayer(entity) and not IsPedInAnyVehicle(entity, false) and not IsPedDeadOrDying(entity, true) and not IsPedInCombat(entity, PlayerPedId())
-end)
+addGlobalPeds("global_peds_drugselling", 1.7, TranslateIt('target_selldrug_icon'), TranslateIt('target_selldrug'),
+    function(entity)
+        dealingPed = entity
+        sellDrugMenu(entity)
+    end, function(entity)
+        if isDrugDealing and dealingPed ~= entity then return false end
+        local pedModel = GetEntityModel(entity)
+        if Config.BlackListPeds[pedModel] then return end
+        local inventoryItems = ScriptFunctions.GetInventoryDrugs()
+        if #inventoryItems < 1 then return false end
+        if soldPedsList[entity] then return false end
+        return IsEntityAPed(entity) and not IsPedAPlayer(entity) and not IsPedInAnyVehicle(entity, false) and
+            not IsPedDeadOrDying(entity, true) and not IsPedInCombat(entity, PlayerPedId())
+    end)
 
 ----
 -- SELL DRUGS MENU:
 ----
 
 function getLVL(cb)
-    if not playerLVL then 
-        Fr.TriggerServerCallback('op-drugselling:getlvl', function(reslvl)
-            playerLVL = resExp
-            cb(reslvl)
-        end)
-    else 
-        cb(playerLVL) 
+    if not playerLVL then
+        local reslvl = lib.callback.await('op-drugselling:getlvl', 1000)
+        cb(reslvl)
+    else
+        cb(playerLVL)
     end
 end
 
@@ -97,7 +100,8 @@ function sellDrugMenu(entity)
 
     if math.random(100) <= pedCfg.refuseChance then
         if Config.dispatchScript ~= "none" and pedCfg.dispatchCall then
-            sendDispatchAlert(TranslateIt('drugdeal_dispatch_title'), TranslateIt('drugdeal_dispatch_message'), Config.DrugSelling.blipData)
+            sendDispatchAlert(TranslateIt('drugdeal_dispatch_title'), TranslateIt('drugdeal_dispatch_message'),
+                Config.DrugSelling.blipData)
         end
 
         stopDealFunc()
@@ -113,7 +117,7 @@ function sellDrugMenu(entity)
 
     getLVL(function(lvl)
         local inventoryItems = ScriptFunctions.GetInventoryDrugs()
-        
+
         if not pedCfg then return print('Config for Ped Type not found!', pedType) end
 
         local pedGenderObj = IsPedMale(entity) and maleNames or femaleNames
@@ -135,7 +139,7 @@ function sellDrugMenu(entity)
 
         ClearPedTasks(entity)
         SetBlockingOfNonTemporaryEvents(entity, true)
-        hardStopPed(entity) 
+        hardStopPed(entity)
         faceEachOtherHard(playerPed, entity)
 
         TaskStandStill(entity, -1)
@@ -155,7 +159,7 @@ end
 
 function sellDrugForPedFinalize(drug_name, price)
     local isdead = Fr.isDead()
-    if isdead then 
+    if isdead then
         isDrugDealing = false
         return stopDealFunc()
     end
@@ -169,82 +173,86 @@ function sellDrugForPedFinalize(drug_name, price)
     local drugCfg = Config.DrugSelling.availableDrugs[drug_name]
     if not drugCfg then return print('[op-drugselling] Missing drug config:', drug_name) end
 
-    Fr.TriggerServerCallback('op-drugselling:sellDrug', function(sold)
-        if not sold then 
-            return print('An server-side error occured. Check txAdmin Console.')
+    local sold = lib.callback.await('op-drugselling:sellDrug', 1000, drug_name, price, pedType, isDrugDealing)
+
+    if not sold then
+        return print('An server-side error occured. Check txAdmin Console.')
+    end
+
+    local pedCfg = Config.PedTypes[pedType]
+    if math.random(100) <= Config.DrugSelling.dispatchCallChance then
+        if Config.dispatchScript ~= "none" and pedCfg.dispatchCall then
+            sendDispatchAlert(TranslateIt('drugdeal_dispatch_title'), TranslateIt('drugdeal_dispatch_message'),
+                Config.DrugSelling.blipData)
+        end
+    end
+
+    if sold.sold then
+        soldPedsList[dealingPed] = true
+        movementDisabled = true
+
+        CreateThread(function()
+            while movementDisabled do
+                DisableControlAction(0, 30, true)
+                DisableControlAction(0, 31, true)
+                DisableControlAction(0, 32, true)
+                DisableControlAction(0, 33, true)
+                DisableControlAction(0, 34, true)
+                DisableControlAction(0, 35, true)
+                DisableControlAction(0, 21, true)
+                DisableControlAction(0, 22, true)
+                DisableControlAction(0, 36, true)
+                Wait(0)
+            end
+        end)
+
+        playerLVL = sold.newLevel
+        FaceEachOtherAndPlayGive(dealingPed, drugCfg.handPropName)
+
+        if not sold.isRivalry then
+            --sendNotify(TranslateIt('notify_success', sold.amount, sold.label, sold.price), "success", 5)
+        else
+            --sendNotify(TranslateIt('notify_success_2', sold.amount, sold.label, sold.price), "success", 5)
         end
 
-        local pedCfg = Config.PedTypes[pedType]
-        if math.random(100) <= Config.DrugSelling.dispatchCallChance then
-            if Config.dispatchScript ~= "none" and pedCfg.dispatchCall then
-                sendDispatchAlert(TranslateIt('drugdeal_dispatch_title'), TranslateIt('drugdeal_dispatch_message'), Config.DrugSelling.blipData)
-            end
+        if sold.zoneOwner then
+            --sendNotify(TranslateIt('notify_zoneowner'), "info", 5)
         end
 
-        if sold.sold then
-            soldPedsList[dealingPed] = true
-            movementDisabled = true
-            CreateThread(function()
-                while movementDisabled do
-                    DisableControlAction(0, 30, true) 
-                    DisableControlAction(0, 31, true) 
-                    DisableControlAction(0, 32, true) 
-                    DisableControlAction(0, 33, true) 
-                    DisableControlAction(0, 34, true)
-                    DisableControlAction(0, 35, true) 
-                    DisableControlAction(0, 21, true) 
-                    DisableControlAction(0, 22, true) 
-                    DisableControlAction(0, 36, true) 
-                    Wait(0)
-                end
-            end)
+        movementDisabled = false
 
-            playerLVL = sold.newLevel
-            FaceEachOtherAndPlayGive(dealingPed, drugCfg.handPropName)
-            if not sold.isRivalry then 
-                --sendNotify(TranslateIt('notify_success', sold.amount, sold.label, sold.price), "success", 5)
-            else
-                --sendNotify(TranslateIt('notify_success_2', sold.amount, sold.label, sold.price), "success", 5)
-            end
+        local dumpPed = dealingPed
+        Citizen.CreateThread(function()
+            Wait(25 * 1000)
+            DeletePed(dumpPed)
+        end)
+    elseif sold.steal then
+        ClearPedTasks(PlayerPedId())
 
-            if sold.zoneOwner then 
-                --sendNotify(TranslateIt('notify_zoneowner'), "info", 5)
-            end
-            
-            movementDisabled = false
-
-            local dumpPed = dealingPed
-            Citizen.CreateThread(function()
-                Wait(25 * 1000)
-                DeletePed(dumpPed)
-            end)
-        elseif sold.steal then
-            ClearPedTasks(PlayerPedId())
-
-            addTargetTypedEntity("ped_drug_stolen", 2.0, TranslateIt('target_getdrugs_icon'), TranslateIt('target_getdrugs'), function(deleteData)
+        addTargetTypedEntity("ped_drug_stolen", 2.0, TranslateIt('target_getdrugs_icon'),
+            TranslateIt('target_getdrugs'), function(deleteData)
                 TriggerServerEvent('op-drugselling:getBackDrugs')
                 removeTargetEntity(deleteData)
             end, dealingPed)
 
-            MakePedRunAway()
-            sendNotify(TranslateIt('notify_steal'), "error", 5)
-        elseif sold.refused then
-            local dumpPed = dealingPed
-            stopDealFunc()
-            sendNotify(TranslateIt('notify_refuse'), "error", 5)
-            Citizen.CreateThread(function()
-                Wait(25 * 1000)
-                DeletePed(dumpPed)
-            end)
-        end
+        MakePedRunAway()
+        sendNotify(TranslateIt('notify_steal'), "error", 5)
+    elseif sold.refused then
+        local dumpPed = dealingPed
+        stopDealFunc()
+        sendNotify(TranslateIt('notify_refuse'), "error", 5)
+        Citizen.CreateThread(function()
+            Wait(25 * 1000)
+            DeletePed(dumpPed)
+        end)
+    end
 
-        if isDrugDealing then
-            Citizen.CreateThread(function()
-                Wait(Config.CornerDealing.SellTimeout * 1000)
-                getNextDealing()
-            end)
-        end
-    end, drug_name, price, pedType, isDrugDealing)
+    if isDrugDealing then
+        Citizen.CreateThread(function()
+            Wait(Config.CornerDealing.SellTimeout * 1000)
+            getNextDealing()
+        end)
+    end
 end
 
 ----
@@ -265,14 +273,14 @@ if Config.CornerDealing.Enable then
             getNextDealing()
         else
             isDrugDealing = false
-            
+
             stopDealFunc()
             DeletePed(dealingPed)
 
             dealingPed = nil
             sendNotify(TranslateIt('ended_drugdealing'), "info", 5)
             isOnCooldown = true
-            
+
             local timeouttime = Config.CornerDealing.SellTimeout * 1000
             SetTimeout(timeouttime + 2000, function()
                 isOnCooldown = false
@@ -280,11 +288,12 @@ if Config.CornerDealing.Enable then
         end
     end)
 
-    TriggerEvent('chat:addSuggestion', ('/%s'):format(Config.CornerDealing.Command), TranslateIt('drugsell_command_help'), {})
+    TriggerEvent('chat:addSuggestion', ('/%s'):format(Config.CornerDealing.Command), TranslateIt('drugsell_command_help'),
+    {})
 
     RegisterCommand(Config.CornerDealing.Command, function()
         TriggerEvent('op-drugselling:startDealingCorner')
-    end)
+    end, false)
 
     function getNextDealing()
         if not isDrugDealing then return end
@@ -303,20 +312,20 @@ function MakePedRunAway()
     local ped = dealingPed
     if not DoesEntityExist(ped) or IsEntityDead(ped) then return end
 
-    SetEntityAsMissionEntity(ped, true, false)       
+    SetEntityAsMissionEntity(ped, true, false)
     ClearPedTasksImmediately(ped)
     ClearPedSecondaryTask(ped)
-    TaskSetBlockingOfNonTemporaryEvents(ped, false) 
+    TaskSetBlockingOfNonTemporaryEvents(ped, false)
     SetBlockingOfNonTemporaryEvents(ped, false)
 
-    SetPedCombatAttributes(ped, 46, false)           
-    SetPedFleeAttributes(ped, 0, false)             
+    SetPedCombatAttributes(ped, 46, false)
+    SetPedFleeAttributes(ped, 0, false)
     SetPedSeeingRange(ped, 80.0)
     SetPedHearingRange(ped, 80.0)
     SetPedAlertness(ped, 3)
 
     SetPedKeepTask(ped, true)
-    SetPedMaxMoveBlendRatio(ped, 3.0)                
+    SetPedMaxMoveBlendRatio(ped, 3.0)
     SetPedDesiredMoveBlendRatio(ped, 3.0)
 
     local ply = GetPlayerPed(-1)
@@ -334,7 +343,7 @@ end
 ----
 
 function stopDealFunc()
-    if dealingPed then 
+    if dealingPed then
         FreezeEntityPosition(dealingPed, false)
         TaskClearLookAt(dealingPed)
         ClearPedTasksImmediately(dealingPed)
@@ -381,7 +390,7 @@ function FaceEachOtherAndPlayGive(targetPed, propName)
         end
     end)
     SetModelAsNoLongerNeeded(propHash)
-    
+
     Wait(2300)
     DeleteEntity(prop)
     PlayPedAmbientSpeechNative(targetPed, "GENERIC_THANKS", "SPEECH_PARAMS_FORCE")
@@ -418,7 +427,9 @@ local function findSafeSpawnNear(px, py, pz, minDist, maxDist, attempts)
 end
 
 function SpawnRandomPedAndApproach(minDist, maxDist, walkSpeed, stopRange)
-    local models = {"a_f_m_fatwhite_01", "a_f_m_soucentmc_01", "a_m_m_afriamer_01", "a_m_m_bevhills_02", "a_m_m_eastsa_01", "a_m_m_polynesian_01", "a_m_m_trampbeac_01", "a_m_y_beachvesp_01", "a_m_y_clubcust_01", "a_m_y_epsilon_02", "a_m_y_vinewood_01", "a_m_y_vinewood_02", "cs_dom", "cs_manuel"}
+    local models = { "a_f_m_fatwhite_01", "a_f_m_soucentmc_01", "a_m_m_afriamer_01", "a_m_m_bevhills_02",
+        "a_m_m_eastsa_01", "a_m_m_polynesian_01", "a_m_m_trampbeac_01", "a_m_y_beachvesp_01", "a_m_y_clubcust_01",
+        "a_m_y_epsilon_02", "a_m_y_vinewood_01", "a_m_y_vinewood_02", "cs_dom", "cs_manuel" }
     minDist = minDist or 3.0
     maxDist = maxDist or 7.0
     walkSpeed = walkSpeed or 1.0
@@ -472,8 +483,8 @@ function SpawnRandomPedAndApproach(minDist, maxDist, walkSpeed, stopRange)
                     arrived = true
                     isPedAtPoint = true
                     ClearPedTasks(ped)
-                    TaskStandStill(ped, -1)                           
-                    TaskTurnPedToFaceEntity(ped, playerPed, 800)      
+                    TaskStandStill(ped, -1)
+                    TaskTurnPedToFaceEntity(ped, playerPed, 800)
                     TaskLookAtEntity(ped, playerPed, -1, 2048, 3)
                 end
             end

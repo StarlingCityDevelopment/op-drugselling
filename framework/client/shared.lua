@@ -13,13 +13,13 @@ ScriptFunctions.GetInventoryDrugs = function()
     if drugsCache.data and now < drugsCache.expiresAt then
         return drugsCache.data
     end
-    
+
     if ESX then
         local items = playerData.inventory
-        if not items then 
-            return {} 
+        if not items then
+            return {}
         end
-        
+
         for k, v in pairs(items) do
             if v and Config.DrugSelling.availableDrugs[v.name] and v.count > 0 then
                 local drugInfo = Config.DrugSelling.availableDrugs[v.name]
@@ -36,10 +36,10 @@ ScriptFunctions.GetInventoryDrugs = function()
         end
     elseif QBCore or QBox then
         local items = playerData.items
-        if not items then 
-            return {} 
+        if not items then
+            return {}
         end
-        
+
         for k, v in pairs(items) do
             if v and Config.DrugSelling.availableDrugs[v.name] and (v.amount or v.count > 0) then
                 local drugInfo = Config.DrugSelling.availableDrugs[v.name]
@@ -58,7 +58,7 @@ ScriptFunctions.GetInventoryDrugs = function()
 
     drugsCache.data = drugsList
     drugsCache.expiresAt = now + cacheTime
-    
+
     debugPrint("drugsList", json.encode(drugsList))
     return drugsList
 end

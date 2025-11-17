@@ -8,12 +8,10 @@ if Config.LevelCommand then
         if not playersEXP[tostring(source)] then
             loadPlayerBySrc(source)
         end
-
         local lvl = levelFromExp(playersEXP[tostring(source)].exp)
         local boost = GetLevelBoost(lvl)
-
         TriggerClientEvent('op-drugselling:sendNotify', source, TranslateIt('level_command', lvl, boost .. "%"), "info", 5)
-    end)
+    end, false)
 end
 
 RegisterServerEvent('op-drugselling:getBackDrugs', function()
@@ -31,7 +29,7 @@ local function adjustSellChanceByPrice(baseChance, pricePerGram, cfgDrug)
     local optP = cfgDrug.optimalPrice or pricePerGram or 0
     local maxP = cfgDrug.maximumPrice or (optP > 0 and optP * 2 or 100)
 
-    local influence = (cfgDrug.priceInfluence or 30) * 0.5  
+    local influence = (cfgDrug.priceInfluence or 30) * 0.5
 
     if optP <= minP then minP = math.max(0, optP - 1) end
     if maxP <= optP then maxP = optP + 1 end
@@ -49,37 +47,35 @@ local function adjustSellChanceByPrice(baseChance, pricePerGram, cfgDrug)
     return math.max(0, math.min(100, adjusted))
 end
 
-Fr.RegisterServerCallback('op-drugselling:getlvl', function(source, cb)
+lib.callback.register('op-drugselling:getlvl', function(source)
     if not playersEXP[tostring(source)] then
         loadPlayerBySrc(source)
     end
-
-    local lvl = levelFromExp(playersEXP[tostring(source)].exp)
-    return cb(lvl)
+    return levelFromExp(playersEXP[tostring(source)].exp) or 1
 end)
 
-Fr.RegisterServerCallback('op-drugselling:sellDrug', function(source, cb, drugName, pricePerGram, pedType, cornerSelling)
+lib.callback.register('op-drugselling:sellDrug', function(source, drugName, pricePerGram, pedType, cornerSelling)
     local xPlayer = Fr.getPlayerFromId(source)
-    if not xPlayer then return cb(false) end
+    if not xPlayer then return false end
 
     local hasItem = Fr.getItem(xPlayer, drugName)
     if not (hasItem and hasItem.amount and hasItem.amount > 0) then
         print('[op-drugselling] Player doenst have items inside inventory')
         print(json.encode(hasItem))
         print("drugName", drugName)
-        return cb(false)
+        return false
     end
 
     local cfgDrug = Config.DrugSelling.availableDrugs[drugName]
     if not cfgDrug then
         print('[op-drugselling] Missing drug config:', drugName)
-        return cb(false)
+        return false
     end
 
     local cfgPed = Config.PedTypes[pedType]
     if not cfgPed then
         print('[op-drugselling] Missing pedType config:', pedType)
-        return cb(false)
+        return false
     end
 
     local maxPerPed = cfgDrug.maxAmountPedTransaction or 1
@@ -94,20 +90,18 @@ Fr.RegisterServerCallback('op-drugselling:sellDrug', function(source, cb, drugNa
     local multiplier = 1.0 + (GetLevelBoost(playerLevel) / 100.0)
     local finalPrice = math.floor((pricePerGram or 0) * amountSell * multiplier)
 
-    local sellChance, stealChance, refuseChance
+    local sellChance, stealChance
 
     if cornerSelling then
         sellChance  = 80
         stealChance = 20
-        refuseChance = 0
     else
         local baseSell = math.max(0, math.min(100, cfgPed.buyChance or 0))
-        sellChance  = adjustSellChanceByPrice(baseSell, pricePerGram or cfgDrug.optimalPrice, cfgDrug)
-        stealChance = math.max(0, math.min(100, cfgPed.stealDrugChance or 0))
-        refuseChance = math.max(0, 100 - (sellChance + stealChance))
+        sellChance     = adjustSellChanceByPrice(baseSell, pricePerGram or cfgDrug.optimalPrice, cfgDrug)
+        stealChance    = math.max(0, math.min(100, cfgPed.stealDrugChance or 0))
     end
 
-    local roll = math.random(1, 100)
+    local roll         = math.random(1, 100)
     local stealBandEnd = stealChance
     local sellBandEnd  = stealBandEnd + sellChance
 
@@ -115,9 +109,13 @@ Fr.RegisterServerCallback('op-drugselling:sellDrug', function(source, cb, drugNa
         Fr.removeItem(xPlayer, drugName, amountSell)
         stolenDrugs[tostring(source)] = {
             amount = amountSell,
-            drugName = drugName, 
+            drugName = drugName,
         }
-        return cb({ steal = true, amount = amountSell })
+
+        return {
+            steal = true,
+            amount = amountSell
+        }
     elseif roll <= sellBandEnd then
         local label = (cfgDrug.label or drugName)
 
@@ -125,21 +123,21 @@ Fr.RegisterServerCallback('op-drugselling:sellDrug', function(source, cb, drugNa
         local zoneOwner = false
         if Config.AdditionalScripts.op_Gangs then
             local turfId = exports['op-crime']:getPlayerTurfZone(source)
-            if turfId then 
+            if turfId then
                 isRivalry = exports['op-crime']:isTurfZoneInRivalry(turfId)
                 zoneOwner = exports['op-crime']:isPlayerTurfOwner(source, turfId)
                 TriggerEvent('op-crime:drugSold', source, turfId, finalPrice)
 
-                if isRivalry then 
+                if isRivalry then
                     finalPrice = finalPrice / 2
                 end
 
-                if zoneOwner then 
+                if zoneOwner then
                     finalPrice = finalPrice * 1.1
                 end
             end
         end
-        playersEXP[tostring(source)].exp = playersEXP[tostring(source)].exp + cfgPed.saleEXP 
+        playersEXP[tostring(source)].exp = playersEXP[tostring(source)].exp + cfgPed.saleEXP
         playersEXP[tostring(source)].changed = true
         local newLevel = levelFromExp(playersEXP[tostring(source)].exp)
 
@@ -149,10 +147,12 @@ Fr.RegisterServerCallback('op-drugselling:sellDrug', function(source, cb, drugNa
         Fr.ManageDirtyMoney(xPlayer, "add", finalPrice)
 
         local ident = Fr.GetIndentifier(source)
-        local message = formatWebHook("**Drug Name:**", drugName or "None", "\n**Price per gram:**", pricePerGram, "\n**Player Identificator:**", ident, "\n**Price:**", finalPrice, "\n**Corner Selling:**", cornerSelling and "True" or "False")
+        local message = formatWebHook("**Drug Name:**", drugName or "None", "\n**Price per gram:**", pricePerGram,
+            "\n**Player Identificator:**", ident, "\n**Price:**", finalPrice, "\n**Corner Selling:**",
+            cornerSelling and "True" or "False")
         SendWebHook("DRUG SOLD", 706333, message)
 
-        return cb({
+        return {
             sold = true,
             label = label,
             amount = amountSell,
@@ -160,29 +160,20 @@ Fr.RegisterServerCallback('op-drugselling:sellDrug', function(source, cb, drugNa
             newLevel = newLevel,
             isRivalry = isRivalry,
             zoneOwner = zoneOwner
-        })
+        }
     else
-        return cb({ refused = true })
+        return {
+            refused = true
+        }
     end
 end)
 
 function loadPlayerBySrc(source)
-    local ident = Fr.GetIndentifier(source)
-    local row = MySQL.single.await('SELECT expdrugs FROM `'.. Fr.usersTable ..'` WHERE `'.. Fr.identificatorTable ..'` = ?', {ident})
-    
-    if row then 
-        playersEXP[tostring(source)] = {
-            exp = row.expdrugs,
-            changed = false
-        }
-        return playersEXP[tostring(source)]
-    else
-        playersEXP[tostring(source)] = {
-            exp = 0,
-            changed = false
-        }
-        return playersEXP[tostring(source)]
-    end
+    playersEXP[tostring(source)] = {
+        exp = exports.qbx_core:GetMetadata(source, "op_expdrugs") or 0,
+        changed = false
+    }
+    return playersEXP[tostring(source)]
 end
 
 function SavePlayerXP(src)
@@ -192,12 +183,7 @@ function SavePlayerXP(src)
     local st = playersEXP[tostring(src)]
     if not st then return end
 
-    MySQL.update.await([[
-        UPDATE `]] .. Fr.usersTable .. [[`
-        SET expdrugs = ?
-        WHERE `]] .. Fr.identificatorTable .. [[` = ?
-    ]], { st.exp, ident })
-
+    exports.qbx_core:SetMetadata(tonumber(src), "op_expdrugs", st.exp)
     playersEXP[tostring(src)].changed = false
 end
 
@@ -205,11 +191,11 @@ CreateThread(function()
     while true do
         Wait(120000)
         for src, st in pairs(playersEXP) do
-            if st.changed then 
-                SavePlayerXP(src) 
+            if st.changed then
+                SavePlayerXP(src)
                 debugPrint('Saved Player:', src)
             else
-                debugPrint('Skipping', src, json.encode(st))      
+                debugPrint('Skipping', src, json.encode(st))
             end
         end
     end
@@ -217,7 +203,7 @@ end)
 
 AddEventHandler('playerDropped', function()
     local src = tostring(source)
-    if playersEXP[src] and playersEXP[src].changed then 
+    if playersEXP[src] and playersEXP[src].changed then
         SavePlayerXP(source)
         playersEXP[src] = nil
         debugPrint('Saved Player:', src)

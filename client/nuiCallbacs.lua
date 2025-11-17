@@ -6,7 +6,7 @@ RegisterNuiCallback('hideFrame', function(_, cb)
         data = false
     })
 
-    if dealingPed then 
+    if dealingPed then
         TaskClearLookAt(dealingPed)
         ClearPedTasks(dealingPed)
         SetBlockingOfNonTemporaryEvents(dealingPed, false)

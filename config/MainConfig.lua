@@ -1,10 +1,10 @@
 Config = {}
-Config.Locale = "en" -- Supported: EN / SK / CS / DE
+Config.Locale = "fr" -- Supported: EN / SK / CS / DE
 
 -- Czech and Slovak languages by: iceyy4400 (discord id: 1057394957897441380)
 -- German Language by: nameitsphil (discord id: 457672439510335498)
 
-Config.Debug = false
+Config.Debug = GetConvar("environment", "production") ~= "production"
 
 -- 15% OFF WITH CODE "NEWCUSTOMER" at https://otherplanet.dev
 -- Best Gangs Script for FiveM -> https://otherplanet.dev/product/gangs
@@ -15,13 +15,13 @@ Config.AdditionalScripts = {
 
 Config.LevelCommand = "mylevel" -- Check current player level and boost. Set it to false to disable.
 
-Config.dispatchScript = "none" 
+Config.dispatchScript = "ps-dispatch"
 -- Supported:
 -- none
--- cd_dispatch 
--- codem_dispatch 
--- lb-tablet 
--- ps-dispatch 
+-- cd_dispatch
+-- codem_dispatch
+-- lb-tablet
+-- ps-dispatch
 -- origen_police
 -- piotreq_gpt
 -- rcore_dispatch
@@ -35,15 +35,15 @@ Config.CurrencySettings = {
 
 Config.Misc = {
     AccessMethod = "ox-target", -- Supported: ox-target / qb-target
-    Notify = "ox_lib", 
+    Notify = "ox_lib",
     -- Supported:
-    -- op_hud 
-    -- okokNotify 
-    -- vms_notify 
-    -- brutal_notify 
-    -- ox_lib 
-    -- ESX 
-    -- QBCORE 
+    -- op_hud
+    -- okokNotify
+    -- vms_notify
+    -- brutal_notify
+    -- ox_lib
+    -- ESX
+    -- QBCORE
     -- QBOX
 }
 
@@ -57,47 +57,67 @@ Config.DirtyMoney = {
 Config.DrugSelling = {
     availableDrugs = {
         -- Create items in your inventory - https://docs.otherplanet.dev
-        ["weed"] = {
-            itemName = "weed",
-            label = "Weed",
-            minimumPrice = 50,
-            optimalPrice = 80,
-            maximumPrice = 100,
-            maxAmountPedTransaction = 5,
+        ["baggie_ak47"] = {
+            itemName = "baggie_ak47",
+            label = "Weed AK-47",
+            minimumPrice = 10,
+            optimalPrice = 15,
+            maximumPrice = 25,
+            maxAmountPedTransaction = math.random(3, 7),
             handPropName = "prop_weed_bottle",
-            icon = "https://data.otherplanet.dev/fivemicons/%5bdrugs%5d/baggy_weed.png",
+            icon = "https://i.fmfile.com/crYy4c7aRNeXoSSaCocBd/baggie_ak47.webp",
         },
-        ["meth"] = {
-            itemName = "meth",
-            label = "Meth",
-            minimumPrice = 150,
-            optimalPrice = 180,
-            maximumPrice = 250,
-            maxAmountPedTransaction = 7,
-            handPropName = "p_meth_bag_01_s",
-            icon = "https://data.otherplanet.dev/fivemicons/%5bdrugs%5d/baggy_meth.png",
+        ["baggie_purplekush"] = {
+            itemName = "baggie_purplekush",
+            label = "Weed Purple Kush",
+            minimumPrice = 10,
+            optimalPrice = 15,
+            maximumPrice = 25,
+            maxAmountPedTransaction = math.random(3, 7),
+            handPropName = "prop_weed_bottle",
+            icon = "https://i.fmfile.com/crYy4c7aRNeXoSSaCocBd/baggie_purplekush.webp",
         },
-        ["cocaine"] = {
-            itemName = "cocaine",
-            label = "Cocaine",
-            minimumPrice = 450,
-            optimalPrice = 580,
-            maximumPrice = 700,
-            maxAmountPedTransaction = 4,
-            handPropName = "p_meth_bag_01_s",
-            icon = "https://data.otherplanet.dev/fivemicons/%5bdrugs%5d/baggy_cocaine.png",
+        ["baggie_creamcaramel"] = {
+            itemName = "baggie_creamcaramel",
+            label = "Weed Cream Caramel",
+            minimumPrice = 10,
+            optimalPrice = 20,
+            maximumPrice = 25,
+            maxAmountPedTransaction = math.random(3, 7),
+            handPropName = "prop_weed_bottle",
+            icon = "https://i.fmfile.com/crYy4c7aRNeXoSSaCocBd/baggie_creamcaramel.webp",
+        },
+        ["baggie_mooncookies"] = {
+            itemName = "baggie_mooncookies",
+            label = "Weed Moon Cookies",
+            minimumPrice = 10,
+            optimalPrice = 25,
+            maximumPrice = 35,
+            maxAmountPedTransaction = math.random(3, 7),
+            handPropName = "prop_weed_bottle",
+            icon = "https://i.fmfile.com/crYy4c7aRNeXoSSaCocBd/baggie_mooncookies.webp",
+        },
+        ["baggie_sweetcheese"] = {
+            itemName = "baggie_sweetcheese",
+            label = "Weed Sweet Cheese",
+            minimumPrice = 15,
+            optimalPrice = 20,
+            maximumPrice = 25,
+            maxAmountPedTransaction = math.random(3, 7),
+            handPropName = "prop_weed_bottle",
+            icon = "https://i.fmfile.com/crYy4c7aRNeXoSSaCocBd/baggie_sweetcheese.webp",
         }
     },
     dispatchCallChance = 15, -- 15% Chance that after transaction dispatch will be called.
     blipData = {
         -- Dispatch Blips Data
         sprite = 51, -- Blip sprite
-        color = 1, -- Blip color
+        color = 1,   -- Blip color
     }
 }
 
 Config.CornerDealing = {
-    Enable = true, 
+    Enable = false,
     SellTimeout = 5, -- Time in second after which next ped will be spawned In Corner Mode.
     Command = "startselling",
 }
@@ -106,21 +126,21 @@ Config.Leveling = {
     Enable = true,
     LevelEXP = 50, -- One level == 500 exp.
     LevelsList = {
-        [1] = 1, -- 1% Boost for level.
-        [2] = 2, -- 2% Boost for level.
-        [3] = 3, -- 3% Boost for level.
-        [4] = 4, -- 4% Boost for level.
-        [5] = 5, -- 5% Boost for level.
+        [1] = 1,   -- 1% Boost for level.
+        [2] = 2,   -- 2% Boost for level.
+        [3] = 3,   -- 3% Boost for level.
+        [4] = 4,   -- 4% Boost for level.
+        [5] = 5,   -- 5% Boost for level.
     }
 }
 
 Config.PedTypes = {
     ['addicted'] = {
         label = "Addicted",
-        saleEXP = 5, -- EXP per Sale.
+        saleEXP = 5,          -- EXP per Sale.
         stealDrugChance = 30, -- Chance that ped will steal your drugs!
-        buyChance = 80, -- Range 0-100
-        refuseChance = 0, -- Range 0-100 (This is refuse without even open of drug dealing menu)
+        buyChance = 80,       -- Range 0-100
+        refuseChance = 0,     -- Range 0-100 (This is refuse without even open of drug dealing menu)
         dispatchCall = false, -- Can this type of ped call dispatch
         colors = {
             -- Label Box next to ped Name.
@@ -130,11 +150,11 @@ Config.PedTypes = {
     },
     ['normal'] = {
         label = "Normal",
-        saleEXP = 25, -- EXP per Sale.
+        saleEXP = 25,         -- EXP per Sale.
         stealDrugChance = 10, -- Chance that ped will steal your drugs!
-        buyChance = 50, -- Range 0-100
-        refuseChance = 15, -- Range 0-100 (This is refuse without even open of drug dealing menu)
-        dispatchCall = true, -- Can this type of ped call dispatch
+        buyChance = 50,       -- Range 0-100
+        refuseChance = 15,    -- Range 0-100 (This is refuse without even open of drug dealing menu)
+        dispatchCall = true,  -- Can this type of ped call dispatch
         colors = {
             -- Label Box next to ped Name.
             border = "#00ccffff",
@@ -143,11 +163,11 @@ Config.PedTypes = {
     },
     ['party'] = {
         label = "Party",
-        saleEXP = 15, -- EXP per Sale.
+        saleEXP = 15,         -- EXP per Sale.
         stealDrugChance = 10, -- Chance that ped will steal your drugs!
-        buyChance = 75, -- Range 0-100
-        refuseChance = 5, -- Range 0-100 (This is refuse without even open of drug dealing menu)
-        dispatchCall = true, -- Can this type of ped call dispatch
+        buyChance = 75,       -- Range 0-100
+        refuseChance = 5,     -- Range 0-100 (This is refuse without even open of drug dealing menu)
+        dispatchCall = true,  -- Can this type of ped call dispatch
         colors = {
             -- Label Box next to ped Name.
             border = "#ffa600ff",
@@ -158,8 +178,8 @@ Config.PedTypes = {
         label = "Snitch",
         saleEXP = 40,
         stealDrugChance = 0, -- nie kradnie
-        buyChance = 20, -- bardzo rzadko kupuje
-        refuseChance = 50, -- często od razu odmawia
+        buyChance = 20,      -- bardzo rzadko kupuje
+        refuseChance = 50,   -- często od razu odmawia
         dispatchCall = true, -- zawsze duże ryzyko wzywania policji
         colors = {
             border = "#ff0000",
@@ -170,7 +190,7 @@ Config.PedTypes = {
         label = "Street Dealer",
         saleEXP = 30,
         stealDrugChance = 20, -- może spróbować cię ograć
-        buyChance = 60, -- kupi, ale w większych ilościach
+        buyChance = 60,       -- kupi, ale w większych ilościach
         refuseChance = 10,
         dispatchCall = false, -- nie wzywa psów, bo sam kręci biznes
         colors = {
@@ -182,7 +202,7 @@ Config.PedTypes = {
         label = "Rich Guy",
         saleEXP = 10,
         stealDrugChance = 0,
-        buyChance = 90, -- prawie zawsze kupuje
+        buyChance = 90,      -- prawie zawsze kupuje
         refuseChance = 0,
         dispatchCall = true, -- czasami zadzwoni, jak się przestraszy
         colors = {
@@ -206,7 +226,7 @@ Config.PedTypes = {
         label = "Undercover Cop",
         saleEXP = 50,
         stealDrugChance = 0,
-        buyChance = 30, -- udaje że kupuje
+        buyChance = 30,      -- udaje że kupuje
         refuseChance = 0,
         dispatchCall = true, -- 100% szansa że poleci dispatch
         colors = {
