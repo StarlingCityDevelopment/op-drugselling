@@ -32,17 +32,6 @@ jobs:
 
       - name: Bundle files
         run: |
-          mkdir -p ./temp/starling_lib
-          mkdir -p ./temp/starling_lib/web/
-          mkdir -p ./temp/starling_lib/locales/
-          cp ./{fxmanifest.lua,init.lua} ./temp/starling_lib
-          cp ./{locales/en.json,locales/fr.json} ./temp/starling_lib/locales
-          cp -r ./{imports,resource} ./temp/starling_lib
-          cp -r ./web/build ./temp/starling_lib/web/
-          cd ./temp && zip -r ../starling_lib.zip ./starling_lib
-          
-      - name: Bundle files
-        run: |
           mkdir -p ./temp/op-drugselling
           mkdir -p ./temp/op-drugselling/locales/
           cp ./fxmanifest.lua ./temp/op-drugselling
