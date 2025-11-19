@@ -20,9 +20,9 @@ end
 
 Fr.ManageDirtyMoney = function(xPlayer, action, amount)
     if action == "add" then
-        return exports.qbx_core:AddMoney(xPlayer.source, 'cash', amount)
+        return exports.qbx_core:AddMoney(xPlayer.PlayerData.source, 'cash', amount)
     else
-        return exports.qbx_core:RemoveMoney(xPlayer.source, 'cash', amount)
+        return exports.qbx_core:RemoveMoney(xPlayer.PlayerData.source, 'cash', amount)
     end
 end
 
@@ -32,15 +32,15 @@ Fr.GetIndentifier = function(source)
 end
 
 Fr.addItem = function(xPlayer, itemname, quantity)
-    return exports.ox_inventory:AddItem(xPlayer.source, itemname, quantity)
+    return exports.ox_inventory:AddItem(xPlayer.PlayerData.source, itemname, quantity)
 end
 
 Fr.removeItem = function(xPlayer, itemname, quantity)
-    return exports.ox_inventory:RemoveItem(xPlayer.source, itemname, quantity)
+    return exports.ox_inventory:RemoveItem(xPlayer.PlayerData.source, itemname, quantity)
 end
 
 Fr.getItem = function(xPlayer, itemname)
-    local item = exports.ox_inventory:GetItem(xPlayer.source, itemname)
+    local item = exports.ox_inventory:GetItem(xPlayer.PlayerData.source, itemname)
     local table
     if item then
         table = { amount = item.amount, name = itemname, weight = item.weight, label = item.label }
@@ -48,8 +48,4 @@ Fr.getItem = function(xPlayer, itemname)
         table = { amount = 0, name = itemname, weight = 0, label = "" }
     end
     return table
-end
-
-Fr.getInventory = function(xPlayer)
-    return exports.ox_inventory:GetInventoryItems(xPlayer.source)
 end
