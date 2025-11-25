@@ -41,11 +41,19 @@ end
 
 Fr.getItem = function(xPlayer, itemname)
     local item = exports.ox_inventory:GetItem(xPlayer.PlayerData.source, itemname)
-    local table
     if item then
-        table = { amount = item.amount, name = itemname, weight = item.weight, label = item.label }
+        return {
+            amount = item.count,
+            name = itemname,
+            weight = item.weight,
+            label = item.label
+        }
     else
-        table = { amount = 0, name = itemname, weight = 0, label = "" }
+        return {
+            amount = 0,
+            name = itemname,
+            weight = 0,
+            label = ""
+        }
     end
-    return table
 end
