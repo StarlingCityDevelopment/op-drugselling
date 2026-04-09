@@ -126,7 +126,7 @@ lib.callback.register('op-drugselling:sellDrug', function(source, drugName, pric
             if turfId then
                 isRivalry = exports['op-crime']:isTurfZoneInRivalry(turfId)
                 zoneOwner = exports['op-crime']:isPlayerTurfOwner(source, turfId)
-                TriggerEvent('op-crime:drugSold', source, turfId, finalPrice)
+                TriggerEvent('op-crime:drugSold', source, turfId, finalPrice, amountSell)
 
                 if isRivalry then
                     finalPrice = finalPrice / 2
